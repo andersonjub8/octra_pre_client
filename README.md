@@ -1,53 +1,45 @@
-# octra terminal client
+# PumpHunter 🚀
 
-a terminal wallet reminiscent of dos-era tui interfaces — but built with modern asynchronous architecture
+PumpHunter is a specialized on-chain analysis tool for identifying new and promising token launches on [Pump.fun](https://pump.fun/). It monitors the Solana blockchain to find tokens that meet specific "Alpha" criteria.
 
-## what it does
+## Features
 
-- shows your octra wallet balance and tx history  
-- lets you send one or many transactions  
-- exports your private key or full wallet file  
+- **Real-Time Monitoring**: identifies tokens created less than 10 minutes ago.
+- **Market Cap Filtering**: Filters for tokens with a market cap ≤ $10,000 USD.
+- **Whale Detection**: Flags tokens with significant buy transactions (≥ 1 SOL) or strong early holder distribution.
+- **Scam Filter**: Automatically ignores tokens where a single holder owns more than 50% of the supply.
+- **Social Links**: Extracts X (Twitter) profiles and project websites from token metadata.
+- **Activity Metrics**: Tracks the number of unique buyers and initial trading volume.
 
-## works on
+## Requirements
 
-- linux  
-- mac  
-- windows (some features like clipboard may not work)
+- Python 3.8+
+- Flask
+- Requests
 
-## what you need
+## Installation
 
-- python 3.8 or higher  
-- internet connection  
-- your wallet file (private key)
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/andersonjub8/PumpHunter.git
+   cd PumpHunter
+   ```
 
-## how to install and run (step by step)
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-1. open terminal  
+## Running the Application
 
-2. run these commands one by one:
-
-```bash
-git clone https://github.com/octra-labs/octra_pre_client.git
-cd octra_pre_client
-python3 -m venv venv
-source venv/bin/activate # for windows use: venv\Scripts\activate
-pip install -r requirements.txt
-cp wallet.json.example wallet.json
-```
-
-3. open wallet.json and edit it (change placeholders to your wallet data):
-
-```json
-{
-  "priv": "private-key-here",
-  "addr": "octxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-  "rpc": "https://octra.network"
-}
-```
-
-3. run
+To start the PumpHunter dashboard:
 
 ```bash
-./run.sh       # on linux/mac
-run.bat        # on windows
+python3 app.py
 ```
+
+The application will be available at `http://localhost:3000`.
+
+## Methodology
+
+PumpHunter uses the Pump.fun frontend API to fetch the most recent token launches. It then enriches this data by querying trade history and holder distribution for each candidate. Tokens are sorted by recent activity and buyer count to highlight the most trending opportunities.
