@@ -2,9 +2,28 @@ import asyncio
 import aiohttp
 import time
 import json
+import csv
+import os
 
 # Base URLs
 COIN_API = "https://frontend-api-v3.pump.fun"
+BLACKLIST_FILE = "top_deployers_pump.csv"
+
+def load_blacklist():
+    blacklist = set()
+    if os.path.exists(BLACKLIST_FILE):
+        try:
+            with open(BLACKLIST_FILE, mode='r', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    addr = row.get('address')
+                    if addr:
+                        blacklist.add(addr.strip())
+        except Exception:
+            pass
+    return blacklist
+
+BLACKLIST = load_blacklist()
 SWAP_API = "https://swap-api.pump.fun/v2"
 
 HEADERS = {
@@ -33,8 +52,13 @@ async def get_token_details(session, coin, now_ms):
     market_cap_usd = coin.get('usd_market_cap', 0)
 
     # Mandatory Criteria 1, 2, 4
-    # Requirement: Projects that took MORE than 10 minutes to create (Age > 10m)
-    if coin.get('complete', False) or age_min <= 10:
+    # Requirement: Projects older than 20 minutes
+    if coin.get('complete', False) or age_min <= 20:
+        return None
+
+    # Blacklist Filter
+    creator = coin.get('creator')
+    if creator in BLACKLIST:
         return None
 
     # Concurrent fetch of trades and holders
@@ -141,10 +165,17 @@ async def get_token_details(session, coin, now_ms):
 async def fetch_all_data_async():
     now_ms = int(time.time() * 1000)
     async with aiohttp.ClientSession() as session:
-        # Fetch initial list of coins (increased limit to find more potential matches)
-        coins_url = f"{COIN_API}/coins?offset=0&limit=600&sort=created_timestamp&order=DESC&includeNsfw=false"
-        coins_list = await fetch_json(session, coins_url)
-        if not coins_list: return []
+        # Fetch initial list of coins (paginated to find more potential matches)
+        # The API seems to limit single requests to 50
+        all_coins = []
+        for offset in [0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550]:
+            url = f"{COIN_API}/coins?offset={offset}&limit=50&sort=created_timestamp&order=DESC&includeNsfw=false"
+            data = await fetch_json(session, url)
+            if data:
+                all_coins.extend(data)
+
+        if not all_coins: return []
+        coins_list = all_coins
 
         # Concurrently fetch details for all coins
         tasks = [get_token_details(session, coin, now_ms) for coin in coins_list]
@@ -172,7 +203,11 @@ async def fetch_all_data_async():
                  if any(r['Contract'] == coin.get('mint') for r in final_list): continue
                  mc = coin.get('usd_market_cap', 0)
                  age = (now_ms - coin.get('created_timestamp', 0)) / 60000
-                 if age > 10 and mc <= 20000:
+                 creator = coin.get('creator')
+                 # Still respect blacklist even in fallback
+                 if creator in BLACKLIST: continue
+
+                 if age > 20 and mc <= 20000:
                      final_list.append({
                         "Name": coin.get('name'),
                         "Symbol": coin.get('symbol'),
@@ -198,7 +233,7 @@ async def fetch_all_data_async():
         # Cleanup and return top 30
         for r in final_list:
             # Re-format whale buy to Potential if it was a fallback match but no whale detected yet
-            if 'Whale Buy' in r and r['Whale Buy'] == "No" and r['raw_age'] < 10:
+            if 'Whale Buy' in r and r['Whale Buy'] == "No" and r['raw_age'] < 20:
                 r['Whale Buy'] = "Potential"
 
             if 'raw_volume' in r: del r['raw_volume']

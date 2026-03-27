@@ -1,13 +1,15 @@
-# PumpHunter 🚀
+# PumpHunter 🚀 (Jules Platform)
 
-PumpHunter is a specialized on-chain analysis tool for identifying new and promising token launches on [Pump.fun](https://pump.fun/). It monitors the Solana blockchain to find tokens that meet specific "Alpha" criteria.
+PumpHunter is a specialized on-chain analysis tool for identifying token launches on [Pump.fun](https://pump.fun/). It monitors the Solana blockchain to find tokens that meet specific "Alpha" criteria.
 
-## Features
+## Features (Jules Environment)
 
-- **Real-Time Monitoring**: identifies tokens created less than 10 minutes ago.
+- **Age Filter**: Monitor tokens older than 20 minutes to ensure stability.
+- **Blacklist**: Automatically excludes known "scam deployer" wallets from `top_deployers_pump.csv`.
 - **Market Cap Filtering**: Filters for tokens with a market cap ≤ $10,000 USD.
 - **Whale Detection**: Flags tokens with significant buy transactions (≥ 1 SOL) or strong early holder distribution.
 - **Scam Filter**: Automatically ignores tokens where a single holder owns more than 50% of the supply.
+- **Dev Activity**: Track if the developer has sold their initial position.
 - **Social Links**: Extracts X (Twitter) profiles and project websites from token metadata.
 - **Activity Metrics**: Tracks the number of unique buyers and initial trading volume.
 
@@ -15,30 +17,24 @@ PumpHunter is a specialized on-chain analysis tool for identifying new and promi
 
 - Python 3.8+
 - Flask
-- Requests
+- aiohttp
 
-## Installation
+## Deployment on Jules
+This project is configured for the Jules environment. The server runs on port 3000 and is accessible via the Jules proxy.
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/andersonjub8/PumpHunter.git
-   cd PumpHunter
-   ```
+### Installation
 
-2. Install dependencies:
+1. Install dependencies:
    ```bash
    pip install -r requirements.txt
    ```
 
-## Running the Application
+2. Run the application:
+   ```bash
+   python app.py
+   ```
 
-To start the PumpHunter dashboard:
-
-```bash
-python3 app.py
-```
-
-The application will be available at `http://localhost:3000`.
+The application will be available at `http://0.0.0.0:3000`.
 
 ## Methodology
 
