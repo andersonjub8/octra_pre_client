@@ -32,9 +32,9 @@ async def get_token_details(session, coin, now_ms):
     age_min = age_ms / 60000
     market_cap_usd = coin.get('usd_market_cap', 0)
 
-    # Mandatory Criteria 1, 2, 4 (Age < 10m, MC <= 10k, Not Graduated)
-    # We allow some wiggle room for market cap to find more tokens, but strictly follow 10k in filtering
-    if coin.get('complete', False):
+    # Mandatory Criteria 1, 2, 4
+    # Requirement: Projects that took MORE than 10 minutes to create (Age > 10m)
+    if coin.get('complete', False) or age_min <= 10:
         return None
 
     # Concurrent fetch of trades and holders
@@ -105,11 +105,17 @@ async def get_token_details(session, coin, now_ms):
             if top_5_percent > 15:
                 whale_buy = True
 
+    # Developer Holding Check
+    dev_holding = "No"
+    creator = coin.get('creator')
+    if any(h.get('address') == creator and float(h.get('amount', 0)) > 0 for h in holders_list):
+        dev_holding = "Yes"
+
     if is_scam:
         return None
 
-    # Final filter for "Quality" tokens based on prompt
-    is_alpha = age_min <= 10 and market_cap_usd <= 10000 and whale_buy
+    # Final filter for "Quality" tokens based on prompt (Age > 10m)
+    is_alpha = age_min > 10 and market_cap_usd <= 10000 and whale_buy
 
     return {
         "Name": coin.get('name'),
@@ -122,6 +128,7 @@ async def get_token_details(session, coin, now_ms):
         "X": coin.get('twitter', 'N/A'),
         "Site": coin.get('website', 'N/A'),
         "Dev": coin.get('creator'),
+        "Dev Holding": dev_holding,
         "Top 5 Holders (%)": top_5_display,
         "Initial Volume": f"{initial_volume:.2f} SOL",
         "Number of Buyers": len(buyers),
@@ -165,7 +172,7 @@ async def fetch_all_data_async():
                  if any(r['Contract'] == coin.get('mint') for r in final_list): continue
                  mc = coin.get('usd_market_cap', 0)
                  age = (now_ms - coin.get('created_timestamp', 0)) / 60000
-                 if age < 60 and mc <= 15000:
+                 if age > 10 and mc <= 20000:
                      final_list.append({
                         "Name": coin.get('name'),
                         "Symbol": coin.get('symbol'),
@@ -177,6 +184,7 @@ async def fetch_all_data_async():
                         "X": coin.get('twitter', 'N/A'),
                         "Site": coin.get('website', 'N/A'),
                         "Dev": coin.get('creator'),
+                        "Dev Holding": "N/A",
                         "Top 5 Holders (%)": "N/A",
                         "Initial Volume": "N/A",
                         "Number of Buyers": 0,

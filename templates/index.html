@@ -25,7 +25,10 @@
 </head>
 <body>
     <div class="container-fluid px-5 pb-5">
-        <h2 class="header-title text-center">🎯 PumpHunter Token Monitor</h2>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="header-title m-0">🎯 PumpHunter Token Monitor</h2>
+            <button onclick="window.location.reload()" class="btn btn-outline-info btn-sm">🔄 Refresh Search</button>
+        </div>
         <div class="table-responsive">
             <table class="table table-hover table-dark">
                 <thead>
@@ -35,6 +38,7 @@
                         <th>Market Cap</th>
                         <th>Age</th>
                         <th>Whale</th>
+                        <th>Dev Holding</th>
                         <th>Top 5 Holders</th>
                         <th>Volume</th>
                         <th>Buyers</th>
@@ -51,6 +55,15 @@
                         <td><span class="badge badge-mc">{{ token['Market Cap'] }}</span></td>
                         <td><span class="badge badge-time">{{ token.Time }}</span></td>
                         <td><span class="badge badge-whale">{{ token['Whale Buy'] }}</span></td>
+                        <td>
+                            {% if token['Dev Holding'] == 'Yes' %}
+                                <span class="badge bg-success">Yes</span>
+                            {% elif token['Dev Holding'] == 'No' %}
+                                <span class="badge bg-danger">No</span>
+                            {% else %}
+                                <span class="badge bg-secondary">N/A</span>
+                            {% endif %}
+                        </td>
                         <td>{{ token['Top 5 Holders (%)'] }}</td>
                         <td><span class="badge badge-metrics">{{ token['Initial Volume'] }}</span></td>
                         <td><span class="badge badge-metrics">{{ token['Number of Buyers'] }}</span></td>
