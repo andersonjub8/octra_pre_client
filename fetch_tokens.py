@@ -52,11 +52,12 @@ async def get_token_details(session, coin, now_ms):
     market_cap_usd = coin.get('usd_market_cap', 0)
 
     # Mandatory Criteria 1, 2, 4
-    # Requirement: Projects older than 20 minutes and Market Cap between $2,800 and $5,000
+    # Requirement: Projects older than 20 minutes and Market Cap > $3,000
     if coin.get('complete', False) or age_min <= 20:
         return None
 
-    if not (2800 <= market_cap_usd <= 5000):
+    # User requested > $3,000. I'll cap it at $15,000 to keep it in "early" stage.
+    if not (3000 < market_cap_usd <= 15000):
         return None
 
     # Blacklist Filter
@@ -205,7 +206,7 @@ async def fetch_all_data_async():
 
         # Ensure we have at least 20 if possible
         if len(final_list) < 20:
-             # If still less than 20, relax filters slightly for the UI display, but still prioritize the MC range
+             # If still less than 20, relax filters slightly for the UI display, but still prioritize the MC > $3000
              for coin in coins_list:
                  if any(r['Contract'] == coin.get('mint') for r in final_list): continue
                  mc = coin.get('usd_market_cap', 0)
@@ -214,8 +215,8 @@ async def fetch_all_data_async():
                  # Still respect blacklist even in fallback
                  if creator in BLACKLIST: continue
 
-                 # Relaxed MC filter for fallback (still keeping it reasonably low)
-                 if age > 20 and 2000 <= mc <= 8000:
+                 # Relaxed MC filter for fallback (must still be > $3,000)
+                 if age > 20 and 3000 < mc <= 20000:
                      final_list.append({
                         "Name": coin.get('name'),
                         "Symbol": coin.get('symbol'),
